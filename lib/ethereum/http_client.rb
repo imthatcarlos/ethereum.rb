@@ -4,16 +4,17 @@ module Ethereum
   class HttpClient < Client
     attr_accessor :host, :port, :uri, :ssl, :proxy
 
-    def initialize(host, proxy = nil, log = false)
+    def initialize(host, proxy = nil, log = false, open_timeout = 300)
       super(log)
       uri = URI.parse(host)
       raise ArgumentError unless ['http', 'https'].include? uri.scheme
       @host = uri.host
       @port = uri.port
       @proxy = proxy
-      
+
       @ssl = uri.scheme == 'https'
       @uri = URI("#{uri.scheme}://#{@host}:#{@port}#{uri.path}")
+      @open_timeout = open_timeout
     end
 
     def send_single(payload)
@@ -27,6 +28,9 @@ module Ethereum
       if @ssl
         http.use_ssl = true
       end
+
+      http.open_timeout = @open_timeout
+
       header = {'Content-Type' => 'application/json'}
       request = ::Net::HTTP::Post.new(uri, header)
       request.body = payload
